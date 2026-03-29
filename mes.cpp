@@ -1,23 +1,9 @@
-// mes.cpp
-// Minimum extraction sort pomocí Open MPI.
-//
-// Vstup: soubor "numbers"
-// Výstup (stdout):
-//  1) vstupní posloupnost
-//  2) poté N řádků: seřazená posloupnost od nejmenšího prvku
-//
-// Algoritmus (Minimum extraction sort):
-//  - Rozděl data mezi procesy (Scatterv).
-//  - Opakuj N-krát:
-//      Každý proces najde lokální minimum mezi ještě "nevytaženými" prvky.
-//      Globální minimum se najde stromovou redukcí.
-//      Rank 0 vytiskne hodnotu minima.
-//      Proces, který minimum vlastní, tento prvek "odstraní".
-//
-// Determinismus při shodách: porovnáváme (value, index), tedy při shodné hodnotě vyhraje menší původní index.
+/**
+* PRL 2026 Projekt 1
+* Autor: Vsevolod Pokhvalenko <xpokhv00>
+*/
 
 #include <mpi.h>
-
 #include <cerrno>
 #include <cstdint>
 #include <fstream>
@@ -78,7 +64,7 @@ static void make_scatterv_layout(int N, int P, std::vector<int>& counts, std::ve
     }
 }
 
-// Najde lokální minimum v poli local (obsahuje hodnoty nebo SENTINEL).
+// Najde lokální minimum v poli local.
 // global_offset je počáteční globální index prvku local[0].
 // Vrací Candidate s (value, global_index) lokálního minima.
 static Candidate local_min_with_index(const std::vector<int>& local, int global_offset, int sentinel) {
@@ -92,10 +78,11 @@ static Candidate local_min_with_index(const std::vector<int>& local, int global_
         Candidate cur{v, idx};
         c = better(c, cur);
     }
+
     return c;
 }
 
-// Jedna stromová redukce (binary-tree) pro (value,index) do rank 0.
+// Jedna stromová redukce pro (value,index) do rank 0.
 // Všichni procesy projdou stejnými kroky; ti, co posílají, v redukci končí.
 static Candidate tree_reduce_minloc(Candidate cand, int rank, int size) {
     for (int step = 1; step < size; step <<= 1) {
@@ -213,6 +200,9 @@ int main(int argc, char** argv) {
         MPI_Barrier(MPI_COMM_WORLD);
     }
 
+    // Ukončení exekučního prostředí MPI
     MPI_Finalize();
+
+    // Ukončení programu
     return 0;
 }
